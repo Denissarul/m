@@ -20,14 +20,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f .sync/index.part00 || exit 0
-          test -f .sync/index.part01 || exit 0
-          test -f .sync/index.part02 || exit 0
-          test -f .sync/style.part00 || exit 0
-          test -f .sync/style.part01 || exit 0
-          test -f .sync/style.part02 || exit 0
-          cat .sync/index.part00 .sync/index.part01 .sync/index.part02 | base64 -d > index.php
-          cat .sync/style.part00 .sync/style.part01 .sync/style.part02 | base64 -d > assets/style.css
+          compgen -G '.sync/index.part*' > /dev/null || exit 0
+          compgen -G '.sync/style.part*' > /dev/null || exit 0
+          cat .sync/index.part* | base64 -d > index.php
+          cat .sync/style.part* | base64 -d > assets/style.css
           echo '9e6f97d6e7dd35c4cb6c31e6899aca12f6862a590d5e11f35a28e292dfb54bc9  index.php' | sha256sum -c -
           echo '25597b90d36d2502cdf97544dc6d98d5d50f6170c189422b59701ad41d7dae70  assets/style.css' | sha256sum -c -
           rm -rf .sync
