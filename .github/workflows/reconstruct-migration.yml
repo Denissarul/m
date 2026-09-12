@@ -1,0 +1,43 @@
+name: Reconstruct Avaris migration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.sync/**'
+      - '.github/workflows/reconstruct-migration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Reconstruct migrated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .sync/index.part00 || exit 0
+          test -f .sync/index.part01 || exit 0
+          test -f .sync/index.part02 || exit 0
+          test -f .sync/style.part00 || exit 0
+          test -f .sync/style.part01 || exit 0
+          test -f .sync/style.part02 || exit 0
+          cat .sync/index.part00 .sync/index.part01 .sync/index.part02 | base64 -d > index.php
+          cat .sync/style.part00 .sync/style.part01 .sync/style.part02 | base64 -d > assets/style.css
+          echo '9e6f97d6e7dd35c4cb6c31e6899aca12f6862a590d5e11f35a28e292dfb54bc9  index.php' | sha256sum -c -
+          echo '25597b90d36d2502cdf97544dc6d98d5d50f6170c189422b59701ad41d7dae70  assets/style.css' | sha256sum -c -
+          rm -rf .sync
+      - name: Commit reconstructed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Complete Avaris migration from Drive'
+          git push
